@@ -70,8 +70,6 @@ pixi run -e colmap colmap model_converter \
 ```  -->
 
 ```bash
-pixi run colmap2nerf --text monkey_output/sparse/0 --images monkey_output/colmap_images --colmap_db monkey_output/database.db --out transforms.json
-
 pixi run colmap2nerf --text sparse/0 --images colmap_images --colmap_db database.db --out transforms.json
 ```
 
@@ -84,7 +82,7 @@ pixi shell
 
 ```
 ```bash
-ns-train splatfacto --data /home/alejandro/BommieToolkit
+ns-train splatfacto --data /home/alejandro/BommieToolkit/monkey_output
 ```
 
 ```bash
