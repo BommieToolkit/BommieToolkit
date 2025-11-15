@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Inputs
-video_left="videos/left.MP4"
-video_right="videos/right.MP4"
+video_left="videos/cal_left.MP4"
+video_right="videos/cal_right.MP4"
 freq=30.0
 target="files/april_10x6.yaml"
 output_folder="calibration_output"

@@ -7,3 +7,4 @@
 calibration_output/
 videos/*
 catkin_ws/
+*output*

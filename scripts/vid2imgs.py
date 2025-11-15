@@ -74,12 +74,10 @@ def main():
 
     # Time synchronization via timecode
     tc = probe_timecode(path_video)
-    print(tc)
-    print(timecode_to_ns(tc, fps))
     time_ns = 1000000000000000000 + timecode_to_ns(tc, fps) #1385030208726607500 #+ timecode_to_ns(tc, fps)
     delta = int(1.0/fps * 1e9)
     ts_path = os.path.join(path_output, "image_timestamps.txt")
-    ts_file = open(ts_path, "w", encoding="utf-8")
+    #ts_file = open(ts_path, "w", encoding="utf-8")
 
     if format not in ['png', 'jpg', 'jpeg', 'bmp', 'tiff']:
         print('Invalid image format!!!')
@@ -119,7 +117,7 @@ def main():
             image_timestamp_str = f"{image_timestamp:019d}"
             cv2.imwrite(os.path.join(path_output, f'{image_timestamp_str}.{format}'), gray)
             #cv2.imwrite(os.path.join(path_output, f'{image_timestamp}.{format}'), gray)
-            ts_file.write(f"{image_timestamp}\n")
+            #ts_file.write(f"{image_timestamp}\n")
             
             counter += 1
 

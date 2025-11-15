@@ -6,8 +6,13 @@ platforms = ["linux-64"]
 version = "0.1.0"
 
 [tasks]
+extract_images = "python scripts/vid2imgs.py"
+match_images_by_ns = "python scripts/match_images_by_ns.py"
 
 [dependencies]
+python = "*"
+opencv = "*"
+tqdm = "*"
 
 [environments]
 kalibr = {features = ["kalibr"], no-default-feature = true}
@@ -62,94 +67,15 @@ igraph="*"
 
 ########################################################################################################################
 ########################################################################################################################
-# kalibr feature
+# colmap feature
 [feature.colmap]
-channels = ["fontan", "https://prefix.dev/conda-forge"]
+channels = ["https://prefix.dev/conda-forge"]
 platforms = ["linux-64"]
-
-[feature.colmap.tasks]
-git-clone = {cmd = "git clone https://github.com/colmap/colmap" }
-#setup = {cmd = "pixi run -e vslamlab python Baselines/colmap/colmap_setup.py"}
-#install = {cmd = "./Baselines/colmap/build.sh", depends-on = ["git-clone", "setup"]}
-install = {cmd = "./Baselines/colmap/build.sh", depends-on = ["git-clone"]}
-
-#git-clone = {cmd = "git clone https://github.com/alejandrofontan/kalibr.git catkin_ws/src/kalibr", depends-on = ["create_catkin_ws"] }
-#build = {cmd = "catkin build -j8 --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5", cwd="catkin_ws", depends-on = ["git-clone"] }
-#kalibr-calibrate-stereo-rig = {cmd = "./scripts/calibrate_stereo_rig.sh", depends-on = ["build"] }
 
 [feature.colmap.system-requirements]
 cuda = "12.6"
 
+[feature.colmap.tasks]
+
 [feature.colmap.dependencies]
-# CUDA Build Tools
-cuda-compiler = "*"
-cuda-version = "12.6.*"
-cuda-cudart-dev = "*"
-cuda-crt = "*"
-libcusparse-dev = "*"
-cuda-driver-dev = "*"
-cuda-nvcc = "*"
-cuda-nvrtc-dev = "*"
-cuda-nvtx = "*"
-cuda-nvtx-dev = "*"
-cuda-nvml-dev = "*"
-cuda-profiler-api = "*"
-
-# CUDA Libraries
-cudnn = "*"
-libcublas-dev = "*"
-libcudss-dev = "*"
-libcufile-dev = "*"
-libcufft-dev = "*"
-libcurand-dev = "*"
-libcusolver-dev = "*"
-cusparselt = "*"
-libnvjitlink = "*"
-
-# x11 dependencies
-xorg-libxext = "*"
-xorg-libx11 = "*"
-xorg-libxfixes = "*"
-xorg-libxrender = "*"
-xorg-libice = "*"
-xorg-libsm = "*"
-xorg-libxdmcp = "*"
-xorg-libxau = "*"
-xorg-xorgproto = "*"
-libxkbcommon = "*"
-
-cxx-compiler = "*"
-c-compiler = "*"
-ninja = "*"
-cmake = "*"
-pkg-config = "*"
-make = "*"
-
-libblas = "*"
-libcblas = "*"
-libboost-devel = "*"
-suitesparse = "*"
-eigen = "*"
-freeimage = "*"
-glog = "*"
-gflags = "*"
-glew = "*"
-cgal-cpp = "*"
-ceres-solver = {channel="fontan"}
-
-libgomp = "*"
-libxcb = "*"
-libglu = "*"
-llvm-openmp = "*"
-
-qt-main = "*"
-git = "*"
-flann = "*"
-sqlite = "*"
-vlfeat = "*"
-gmp = "*"
-lz4-c = "*"
-metis = "*"
-
-libgl-devel = "*"
-libopengl-devel = "*"
+colmap={build="*cuda*"}
