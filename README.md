@@ -62,9 +62,31 @@ pixi run -e colmap colmap model_converter \
     --output_type TXT
 ``` 
 
-```bash
+<!-- ```bash
 pixi run -e colmap colmap model_converter \
 	--input_path monkey_output/sparse/0 \
     --output_path monkey_output/sparse/0/mesh.ply \
     --output_type PLY
-``` 
+```  -->
+
+```bash
+pixi run colmap2nerf --text monkey_output/sparse/0 --images monkey_output/colmap_images --colmap_db monkey_output/database.db --out transforms.json
+
+pixi run colmap2nerf --text sparse/0 --images colmap_images --colmap_db database.db --out transforms.json
+```
+
+nerfstudio
+```bash
+git clone https://github.com/nerfstudio-project/nerfstudio.git
+cd nerfstudio
+pixi run post-install
+pixi shell
+
+```
+```bash
+ns-train splatfacto --data /home/alejandro/BommieToolkit
+```
+
+```bash
+ns-viewer --load-config outputs/BommieToolkit/splatfacto/2025-11-15_150812/config.yml
+```

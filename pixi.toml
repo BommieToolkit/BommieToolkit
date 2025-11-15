@@ -8,6 +8,7 @@ version = "0.1.0"
 [tasks]
 extract_images = "python scripts/vid2imgs.py"
 match_images_by_ns = "python scripts/match_images_by_ns.py"
+colmap2nerf = {cmd = "python ../scripts/colmap2nerf.py", cwd = "monkey_output"}
 
 [dependencies]
 python = "*"

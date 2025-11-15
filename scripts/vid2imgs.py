@@ -57,6 +57,7 @@ def main():
     parser.add_argument('--max_frames', type=int, default=2000, help='Maximum number of frames to extract')
     parser.add_argument('--vis', type=bool, default=False, help='Visualize the video')
     parser.add_argument('--scale', action=BooleanOptionalAction, default=True, help='Auto-scale frames to ~640x480 total pixels while preserving aspect ratio')
+    parser.add_argument('--gray', action='store_true', help='Process frames in grayscale')
     parser.add_argument('--format', type=str, default='png', help='Image format')
 
     args = parser.parse_args()
@@ -112,13 +113,14 @@ def main():
                 cv2.waitKey(30)
             
             # Change the image to grayscale
-            gray = cv2.cvtColor(res_img, cv2.COLOR_BGR2GRAY)
-
             image_timestamp_str = f"{image_timestamp:019d}"
-            cv2.imwrite(os.path.join(path_output, f'{image_timestamp_str}.{format}'), gray)
-            #cv2.imwrite(os.path.join(path_output, f'{image_timestamp}.{format}'), gray)
-            #ts_file.write(f"{image_timestamp}\n")
-            
+
+            if args.gray:
+                gray = cv2.cvtColor(res_img, cv2.COLOR_BGR2GRAY)
+                cv2.imwrite(os.path.join(path_output, f'{image_timestamp_str}.{format}'), gray)
+            else:
+                cv2.imwrite(os.path.join(path_output, f'{image_timestamp_str}.{format}'), res_img)
+
             counter += 1
 
         if counter >= max_frames:

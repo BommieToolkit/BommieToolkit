@@ -31,8 +31,8 @@ mkdir -p ${images_folder_right}
 
 # Run calibration steps
 source catkin_ws/devel/setup.bash
-python scripts/vid2imgs.py --video ${video_left}  --output ${images_folder_left} 
-python scripts/vid2imgs.py --video ${video_right} --output ${images_folder_right} 
+python scripts/vid2imgs.py --video ${video_left}  --output ${images_folder_left} --gray
+python scripts/vid2imgs.py --video ${video_right} --output ${images_folder_right} --gray
 
 rosrun kalibr kalibr_bagcreater --folder ${output_folder} --output-bag ${output_bag}
 rosrun kalibr kalibr_calibrate_cameras --target ${target} --models pinhole-radtan pinhole-radtan --topics /cam0/image_raw /cam1/image_raw --bag ${output_bag} --bag-freq ${freq} --verbose
