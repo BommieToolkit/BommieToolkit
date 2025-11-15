@@ -1,0 +1,9 @@
+
+# pixi environments
+.pixi
+*.egg-info
+
+# BommieToolkit files
+calibration_output/
+videos/*
+catkin_ws/
