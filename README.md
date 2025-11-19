@@ -1,8 +1,14 @@
 <div align="center">
     <h1>BommieToolkit</h1>
-    <a href="https://github.com/MIT-SPARK/KISS-Matcher"><img src="https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black" /></a>
+    <a href="https://github.com/BommieToolkit/BommieToolkit"><img src="https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black" /></a>
     <br />
 </div>
+
+<p align="center">
+    <a href="https://scholar.google.com/citations?user=SDtnGogAAAAJ&hl=en"><strong>Alejandro Fontan</strong></a>
+    ·
+    <a href="https://scholar.google.com/citations?user=MNrMUPMAAAAJ&hl=en"><strong>Emilio Olivastri</strong></a>
+</p>
 
 ## Video Recording
 
@@ -132,7 +138,17 @@ ns-train splatfacto --data /home/alejandro/BommieToolkit/monkey_output
 ```
 
 ```bash
-ns-viewer --load-config outputs/monkey_output/splatfacto/2025-11-15_153913/config.yml
+ns-viewer --load-config outputs/monkey_output/splatfacto/2025-11-19_105617/config.yml
 ```
 
 "ply_file_path" : "/home/alejandro/BommieToolkit/monkey_output/sparse/0/mesh.ply",
+
+## BommieToolkit Roadmap
+
+- [ ] Make Kalibr a Conda package
+- [ ] Implement one end-to-end command, from videos to GS.
+- [ ] Documentation for the intermediate outputs
+- [ ] Documentation on recording calibration/reconstruction data
+- [ ] Documentation on gopro settings
+- [ ] How to build an underwater calibration pattern
+- [ ] Refraction Removal
