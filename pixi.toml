@@ -8,12 +8,14 @@ version = "0.1.0"
 [tasks]
 extract_images = "python scripts/vid2imgs.py"
 match_images_by_ns = "python scripts/match_images_by_ns.py"
-colmap2nerf = {cmd = "python ../scripts/colmap2nerf.py", cwd = "monkey_output"}
+get_rig_config_json= "python scripts/convert_camchain_to_rig_config.py"
+colmap2nerf = { cmd = "python ../scripts/colmap2nerf.py", cwd = "monkey_output" }
 
 [dependencies]
 python = "*"
 opencv = "*"
 tqdm = "*"
+pyyaml = "*"
 
 [environments]
 kalibr = {features = ["kalibr"], no-default-feature = true}
@@ -30,7 +32,7 @@ platforms = ["linux-64"]
 create_catkin_ws = "mkdir -p catkin_ws/src && cd catkin_ws && catkin init"
 git-clone = {cmd = "git clone https://github.com/alejandrofontan/kalibr.git catkin_ws/src/kalibr", depends-on = ["create_catkin_ws"] }
 build = {cmd = "catkin build -j8 --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5", cwd="catkin_ws", depends-on = ["git-clone"] }
-kalibr-calibrate-stereo-rig = {cmd = "./scripts/calibrate_stereo_rig.sh", depends-on = ["build"] }
+kalibr-calibrate-stereo-rig = {cmd = "./scripts/calibrate_stereo_rig.sh"}
 
 [feature.kalibr.dependencies]
 python = {version="3.9.18", build="h0755675_0_cpython", channel="https://fast.prefix.dev/conda-forge"}
@@ -79,4 +81,4 @@ cuda = "12.6"
 [feature.colmap.tasks]
 
 [feature.colmap.dependencies]
-colmap={build="*cuda*"}
+colmap = { build="*cuda*", version = "==3.11.1" }

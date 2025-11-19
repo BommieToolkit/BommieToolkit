@@ -51,16 +51,17 @@ def closest_index(sorted_list, x):
 
 def main():
     ap = argparse.ArgumentParser(description="Match images across two folders by nanosecond timestamps.")
-    ap.add_argument("folder_a", type=Path, help="Path to first folder (source A)")
-    ap.add_argument("folder_b", type=Path, help="Path to second folder (source B)")
-    ap.add_argument("out_a", type=Path, help="Output folder for copies from A")
-    ap.add_argument("out_b", type=Path, help="Output folder for matched copies from B (named like A)")
+
+    ap.add_argument("--images_folder_left", type=Path, required=True, help="Path to images folder left")
+    ap.add_argument("--images_folder_right", type=Path, required=True, help="Path to images folder right")
+    ap.add_argument("--colmap_folder_left", type=Path, help="Output folder for copies from left")
+    ap.add_argument("--colmap_folder_right", type=Path, help="Output folder for copies from right")
     ap.add_argument("--threshold-ns", type=int, required=True,
                     help="Max allowed absolute timestamp difference (in nanoseconds)")
     args = ap.parse_args()
 
-    a_items = list_images_with_ts(args.folder_a)
-    b_items = list_images_with_ts(args.folder_b)
+    a_items = list_images_with_ts(args.images_folder_left)
+    b_items = list_images_with_ts(args.images_folder_right)
 
     if not a_items:
         print("No timestamped images found in folder A.")
@@ -69,8 +70,13 @@ def main():
         print("No timestamped images found in folder B.")
         return
 
-    args.out_a.mkdir(parents=True, exist_ok=True)
-    args.out_b.mkdir(parents=True, exist_ok=True)
+    if args.colmap_folder_left.exists() and args.colmap_folder_left.is_dir():
+        shutil.rmtree(args.colmap_folder_left)
+    args.colmap_folder_left.mkdir(parents=True, exist_ok=True)
+
+    if args.colmap_folder_right.exists() and args.colmap_folder_right.is_dir():
+        shutil.rmtree(args.out_colmap_folder_rightb)
+    args.colmap_folder_right.mkdir(parents=True, exist_ok=True)
 
     b_ts, b_paths = build_sorted_b(b_items)
 
@@ -85,15 +91,15 @@ def main():
         diff = abs(ts_a - ts_b)
 
         if diff <= args.threshold_ns:
-            # Copy A -> out_a with original filename
-            dest_a = args.out_a / path_a.name
+            # Copy A -> colmap_folder_left with original filename
+            dest_a = args.colmap_folder_left / path_a.name
 
             if matches % subsample == 0:
                 shutil.copy2(path_a, dest_a)
                 #dest_a.symlink_to(path_a.resolve())
 
-            # Copy B -> out_b but use A's filename
-            dest_b = args.out_b / path_a.name
+            # Copy B -> colmap_folder_right but use A's filename
+            dest_b = args.colmap_folder_right / path_a.name
             if matches % subsample == 0:
                 shutil.copy2(path_b, dest_b)
                 #dest_b.symlink_to(path_b.resolve())

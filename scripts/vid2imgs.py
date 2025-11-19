@@ -2,11 +2,12 @@ import cv2
 import argparse
 import os
 from tqdm import tqdm
-import time
 import subprocess
 from typing import Optional
 from fractions import Fraction
 from argparse import BooleanOptionalAction
+from pathlib import Path
+import shutil
 
 def probe_timecode(path: str) -> Optional[str]:
     cmd = [
@@ -56,7 +57,7 @@ def main():
     parser.add_argument('--skip', type=int, default=0, help='Number of frames to skip')
     parser.add_argument('--max_frames', type=int, default=2000, help='Maximum number of frames to extract')
     parser.add_argument('--vis', type=bool, default=False, help='Visualize the video')
-    parser.add_argument('--scale', action=BooleanOptionalAction, default=True, help='Auto-scale frames to ~640x480 total pixels while preserving aspect ratio')
+    parser.add_argument('--scale', action=BooleanOptionalAction, default=False, help='Auto-scale frames to ~640x480 total pixels while preserving aspect ratio')
     parser.add_argument('--gray', action='store_true', help='Process frames in grayscale')
     parser.add_argument('--format', type=str, default='png', help='Image format')
 
@@ -69,16 +70,20 @@ def main():
     max_frames = args.max_frames
     vis = args.vis
 
+    # If output folder exists, remove it and everything inside
+    folder_output = Path(path_output)
+    if folder_output.exists() and folder_output.is_dir():
+        shutil.rmtree(folder_output)
+    folder_output.mkdir(parents=True, exist_ok=True)
+
     # Resolution scaling
     TARGET_PIXELS = 640 * 480  # 307,200
     factor = None  # we'll infer this on the first frame if scale=True
 
     # Time synchronization via timecode
     tc = probe_timecode(path_video)
-    time_ns = 1000000000000000000 + timecode_to_ns(tc, fps) #1385030208726607500 #+ timecode_to_ns(tc, fps)
+    time_ns = 1000000000000000000 + timecode_to_ns(tc, fps)
     delta = int(1.0/fps * 1e9)
-    ts_path = os.path.join(path_output, "image_timestamps.txt")
-    #ts_file = open(ts_path, "w", encoding="utf-8")
 
     if format not in ['png', 'jpg', 'jpeg', 'bmp', 'tiff']:
         print('Invalid image format!!!')
@@ -105,8 +110,8 @@ def main():
 
             # Check sharpness
             fm = sharpness(res_img)
-            # if fm < 30:
-            #     continue
+            if fm < 30:
+                continue
             
             if vis:
                 cv2.imshow('Frame', res_img)
