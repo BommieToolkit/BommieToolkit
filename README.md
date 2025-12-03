@@ -22,6 +22,12 @@ Extract images from calibration videos
 ```bash
 pixi run extract_images --video videos/cal_left.MP4 --output calibration_output/cam0 --gray --scale
 pixi run extract_images --video videos/cal_right.MP4 --output calibration_output/cam1 --gray --scale
+or
+# Skip is now how many seconds to skip from the start of the video
+# You can let the factor be estimated automatically or explicit it 
+pixi run extract_images --video videos/cal_left.MP4 --output calibration_output/cam0 --gray --factor 0.5 --skip 2.0
+pixi run extract_images --video videos/cal_right.MP4 --output calibration_output/cam1 --gray --factor 0.5 --skip 2.0
+
 ```
 
 Run calibration
@@ -121,7 +127,7 @@ pixi run -e colmap colmap model_converter \
 ```  
 
 ```bash
-pixi run colmap2nerf --text sparse/0 --images colmap_images --colmap_db database.db --out transforms.json
+pixi run colmap2nerf --text sparse/0 --images colmap_images --out transforms.json
 ```
 
 ## GS Reconstruction with nerfstudio

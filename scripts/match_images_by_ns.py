@@ -56,6 +56,7 @@ def main():
     ap.add_argument("--images_folder_right", type=Path, required=True, help="Path to images folder right")
     ap.add_argument("--colmap_folder_left", type=Path, help="Output folder for copies from left")
     ap.add_argument("--colmap_folder_right", type=Path, help="Output folder for copies from right")
+    ap.add_argument("--sample_step", type=int, default=10, help="")
     ap.add_argument("--threshold-ns", type=int, required=True,
                     help="Max allowed absolute timestamp difference (in nanoseconds)")
     args = ap.parse_args()
@@ -75,7 +76,7 @@ def main():
     args.colmap_folder_left.mkdir(parents=True, exist_ok=True)
 
     if args.colmap_folder_right.exists() and args.colmap_folder_right.is_dir():
-        shutil.rmtree(args.out_colmap_folder_rightb)
+        shutil.rmtree(args.colmap_folder_right)
     args.colmap_folder_right.mkdir(parents=True, exist_ok=True)
 
     b_ts, b_paths = build_sorted_b(b_items)
@@ -83,27 +84,24 @@ def main():
     matches = 0
     skipped = 0
 
-    subsample = 10;
+    subsample = ap.sample_step
     for ts_a, path_a in sorted(a_items, key=lambda x: x[0]):
         idx = closest_index(b_ts, ts_a)
         ts_b = b_ts[idx]
         path_b = b_paths[idx]
         diff = abs(ts_a - ts_b)
 
-        if diff <= args.threshold_ns:
+        if diff <= args.threshold_ns and matches % subsample == 0:
             # Copy A -> colmap_folder_left with original filename
             dest_a = args.colmap_folder_left / path_a.name
-
-            if matches % subsample == 0:
-                shutil.copy2(path_a, dest_a)
-                #dest_a.symlink_to(path_a.resolve())
+            shutil.copy2(path_a, dest_a)
+            #dest_a.symlink_to(path_a.resolve())
 
             # Copy B -> colmap_folder_right but use A's filename
             dest_b = args.colmap_folder_right / path_a.name
-            if matches % subsample == 0:
-                shutil.copy2(path_b, dest_b)
-                #dest_b.symlink_to(path_b.resolve())
-
+            shutil.copy2(path_b, dest_b)
+            #dest_b.symlink_to(path_b.resolve())
+            
             matches += 1
         else:
             skipped += 1

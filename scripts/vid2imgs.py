@@ -54,21 +54,25 @@ def main():
     parser.add_argument('--video', type=str, help='Path to video file')
     parser.add_argument('--output', type=str, help='Path to output directory')
     parser.add_argument('--fps', type=int, default=30, help='Frame rate of the video')
-    parser.add_argument('--skip', type=int, default=0, help='Number of frames to skip')
+    parser.add_argument('--sample_step', type=int, default=0, help='Number of frames to skip')
     parser.add_argument('--max_frames', type=int, default=2000, help='Maximum number of frames to extract')
     parser.add_argument('--vis', type=bool, default=False, help='Visualize the video')
+    parser.add_argument('--factor', type=float, default=0.0, help='Rescaling factor for output images')
     parser.add_argument('--scale', action=BooleanOptionalAction, default=False, help='Auto-scale frames to ~640x480 total pixels while preserving aspect ratio')
+    parser.add_argument('--skip', type=float, default=0.0, help='Seconds to skip at start of video')
     parser.add_argument('--gray', action='store_true', help='Process frames in grayscale')
     parser.add_argument('--format', type=str, default='png', help='Image format')
 
     args = parser.parse_args()
     path_video = args.video
     path_output = args.output
-    skip = args.skip
+    sample_step = args.sample_step
     format = args.format
     fps = args.fps
     max_frames = args.max_frames
     vis = args.vis
+    factor = args.factor if args.factor > 0.0 else None
+    skip = args.skip
 
     # If output folder exists, remove it and everything inside
     folder_output = Path(path_output)
@@ -78,7 +82,6 @@ def main():
 
     # Resolution scaling
     TARGET_PIXELS = 640 * 480  # 307,200
-    factor = None  # we'll infer this on the first frame if scale=True
 
     # Time synchronization via timecode
     tc = probe_timecode(path_video)
@@ -92,17 +95,22 @@ def main():
     cap = cv2.VideoCapture(path_video)
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     counter = 0
+
+    if skip > 0.0:
+        seconds_per_frame = 1.0 / fps
+        frames_to_skip = int(skip / seconds_per_frame)
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frames_to_skip)
+
     for i in tqdm(range(frame_count), desc ="Extracting"):
         ret, img = cap.read()
         time_ns += delta
 
-        if factor is None:
-            if args.scale:
-                h0, w0 = img.shape[:2]
-                factor = (TARGET_PIXELS / float(w0 * h0)) ** 0.5
-                factor = min(1.0, factor)
+        if factor is None and args.scale:
+            h0, w0 = img.shape[:2]
+            factor = (TARGET_PIXELS / float(w0 * h0)) ** 0.5
+            factor = min(1.0, factor)
 
-        if ret and (skip == 0 or i % skip == 0):
+        if ret and (sample_step == 0 or i % sample_step == 0):
             image_timestamp = time_ns
             width = int(img.shape[1] *  factor)
             height = int(img.shape[0] * factor)
