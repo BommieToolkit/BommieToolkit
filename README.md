@@ -29,6 +29,17 @@ pixi run extract_images --video videos/cal_left.MP4 --output calibration_output/
 pixi run extract_images --video videos/cal_right.MP4 --output calibration_output/cam1 --gray --factor 0.5 --skip 2.0
 
 ```
+(OPTIONAL!! But makes life easier)
+Synch image pairs using timestamps
+```bash
+pixi run match_images_by_ns \
+  --images_folder_left calibration_output/cam0 \
+  --images_folder_right calibration_output/cam1 \
+  --colmap_folder_left calibration_output/syncd/cam0 \
+  --colmap_folder_right calibration_output/syncd/cam1 \
+  --threshold-ns 5000000 \
+  --sample_step 5 
+```
 
 Run calibration
 ```bash
@@ -70,7 +81,8 @@ pixi run -e colmap colmap feature_extractor \
   --image_path monkey_output/colmap_images \
   --database_path monkey_output/database.db \
   --ImageReader.single_camera 1 \
-  --ImageReader.single_camera_per_folder 1
+  --ImageReader.single_camera_per_folder 1 \
+  --ImageReader.single_camera_per_image 0
 ```
 
 ```bash
