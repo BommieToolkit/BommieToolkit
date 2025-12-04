@@ -57,7 +57,7 @@ def main():
     parser.add_argument('--sample_step', type=int, default=0, help='Number of frames to skip')
     parser.add_argument('--max_frames', type=int, default=2000, help='Maximum number of frames to extract')
     parser.add_argument('--vis', type=bool, default=False, help='Visualize the video')
-    parser.add_argument('--factor', type=float, default=0.0, help='Rescaling factor for output images')
+    parser.add_argument('--factor', type=float, default=1.0, help='Rescaling factor for output images')
     parser.add_argument('--scale', action=BooleanOptionalAction, default=False, help='Auto-scale frames to ~640x480 total pixels while preserving aspect ratio')
     parser.add_argument('--skip', type=float, default=0.0, help='Seconds to skip at start of video')
     parser.add_argument('--gray', action='store_true', help='Process frames in grayscale')
@@ -73,6 +73,10 @@ def main():
     vis = args.vis
     factor = args.factor if args.factor > 0.0 else None
     skip = args.skip
+    
+    # If the scale option is set, it overrides the factor option
+    scale = args.scale
+    define_factor = True if scale else False
 
     # If output folder exists, remove it and everything inside
     folder_output = Path(path_output)
@@ -96,19 +100,23 @@ def main():
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     counter = 0
 
+    # If skip is specified, move the video to that timestamp
+    frames_to_skip = 0
     if skip > 0.0:
         seconds_per_frame = 1.0 / fps
         frames_to_skip = int(skip / seconds_per_frame)
         cap.set(cv2.CAP_PROP_POS_FRAMES, frames_to_skip)
+        time_ns += frames_to_skip * delta
 
-    for i in tqdm(range(frame_count), desc ="Extracting"):
+    for i in tqdm(range(frame_count - frames_to_skip), desc ="Extracting"):
         ret, img = cap.read()
         time_ns += delta
 
-        if factor is None and args.scale:
+        if define_factor and scale:
             h0, w0 = img.shape[:2]
             factor = (TARGET_PIXELS / float(w0 * h0)) ** 0.5
             factor = min(1.0, factor)
+            define_factor = False
 
         if ret and (sample_step == 0 or i % sample_step == 0):
             image_timestamp = time_ns
