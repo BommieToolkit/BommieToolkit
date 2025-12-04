@@ -84,7 +84,7 @@ def main():
     matches = 0
     skipped = 0
 
-    subsample = ap.sample_step
+    subsample = args.sample_step
     for ts_a, path_a in sorted(a_items, key=lambda x: x[0]):
         idx = closest_index(b_ts, ts_a)
         ts_b = b_ts[idx]
