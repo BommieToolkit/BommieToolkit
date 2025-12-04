@@ -79,19 +79,21 @@ def main():
         shutil.rmtree(args.colmap_folder_right)
     args.colmap_folder_right.mkdir(parents=True, exist_ok=True)
 
+    # Sort both lists by timestamp
     b_ts, b_paths = build_sorted_b(b_items)
+    a_ts, a_paths = build_sorted_b(a_items)
 
     matches = 0
     skipped = 0
-
+    counter = 0
     subsample = args.sample_step
-    for ts_a, path_a in sorted(a_items, key=lambda x: x[0]):
+    for ts_a, path_a in zip(a_ts, a_paths):
         idx = closest_index(b_ts, ts_a)
         ts_b = b_ts[idx]
         path_b = b_paths[idx]
         diff = abs(ts_a - ts_b)
 
-        if diff <= args.threshold_ns and matches % subsample == 0:
+        if diff <= args.threshold_ns and counter % subsample == 0:
             # Copy A -> colmap_folder_left with original filename
             dest_a = args.colmap_folder_left / path_a.name
             shutil.copy2(path_a, dest_a)
@@ -105,6 +107,8 @@ def main():
             matches += 1
         else:
             skipped += 1
+
+        counter += 1
 
     print(f"Done. Matches copied: {matches}. A images skipped (no close match): {skipped}.")
 
