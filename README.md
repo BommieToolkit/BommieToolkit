@@ -139,7 +139,7 @@ pixi run -e colmap colmap model_converter \
 ```  
 
 ```bash
-pixi run colmap2nerf --text sparse/0 --images colmap_images --out transforms.json
+pixi run colmap2nerf --text sparse/0 --images colmap_images --out transforms.json --keep_colmap_coords
 ```
 
 ## GS Reconstruction with nerfstudio
