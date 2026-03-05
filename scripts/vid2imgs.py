@@ -55,7 +55,7 @@ def main():
     parser.add_argument('--output', type=str, help='Path to output directory')
     parser.add_argument('--fps', type=int, default=30, help='Frame rate of the video')
     parser.add_argument('--sample_step', type=int, default=0, help='Number of frames to skip')
-    parser.add_argument('--max_frames', type=int, default=2000, help='Maximum number of frames to extract')
+    parser.add_argument('--max_frames', type=int, default=None, help='Maximum number of frames to extract')
     parser.add_argument('--vis', type=bool, default=False, help='Visualize the video')
     parser.add_argument('--factor', type=float, default=1.0, help='Rescaling factor for output images')
     parser.add_argument('--scale', action=BooleanOptionalAction, default=False, help='Auto-scale frames to ~640x480 total pixels while preserving aspect ratio')
@@ -144,7 +144,7 @@ def main():
 
             counter += 1
 
-        if counter >= max_frames:
+        if max_frames is not None and counter >= max_frames:
             break
     
     cap.release()
