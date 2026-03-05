@@ -125,9 +125,9 @@ def main():
             res_img = cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
 
             # Check sharpness
-            fm = sharpness(res_img)
-            if fm < 30:
-                continue
+            # fm = sharpness(res_img)
+            # if fm < 30:
+            #     continue
             
             if vis:
                 cv2.imshow('Frame', res_img)
