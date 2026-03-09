@@ -51,12 +51,13 @@ def folder_to_temp_video(folder_path, fps=5):
 
 # ---------- Load Folder ----------
 def load_folder(folder_path):
-    global video_frames, video_frames_np, inference_state, frame0_size, clicks, temp_video_path
+    global video_frames, video_frames_np, inference_state, frame0_size, clicks, temp_video_path, video_img_paths
     video_frames = []
     video_frames_np = []
     clicks = []
 
     video_file, img_paths = folder_to_temp_video(folder_path)
+    video_img_paths = img_paths
 
     for p in img_paths:
         pil_img = Image.open(p).convert("RGB")
@@ -66,7 +67,7 @@ def load_folder(folder_path):
     frame0_size = video_frames_np[0].shape[1], video_frames_np[0].shape[0]
 
     inference_state = predictor.init_state(video_path=video_file)
-    return video_frames_np[0], frame0_size[0], frame0_size[1]  # return image + width + height
+    return video_frames_np[0]
 
 # ---------- Set Click Type ----------
 def set_positive_mode():
@@ -95,20 +96,19 @@ def update_preview(x, y):
         draw.ellipse((x-5, y-5, x+5, y+5), outline="blue", width=2)
     return pil
 
-# ---------- Add Click via sliders ----------
-def add_click_via_slider(x, y):
-    global clicks
+def add_click_via_select(evt: gr.SelectData):
+    global clicks, frame0_size
     if frame0_size is None:
         return None
     width, height = frame0_size
+    x, y = evt.index[0], evt.index[1]
     x = int(np.clip(x, 0, width-1))
     y = int(np.clip(y, 0, height-1))
     clicks.append({"x": x, "y": y, "label": current_click_type})
-
     return update_preview(x, y)
 
 # ---------- Run Model ----------
-def run_model():
+def run_model(masks_parent_path):
     global clicks, current_obj_id, frame0_size
     if inference_state is None:
         return "Please load a folder first.", []
@@ -141,19 +141,24 @@ def run_model():
             for i, out_obj_id in enumerate(out_obj_ids)
         }
 
-    os.makedirs("masks", exist_ok=True)
+    masks_output_folder = os.path.join(masks_parent_path, "masks")
+    os.makedirs(masks_output_folder, exist_ok=True)
     gallery_imgs = []
 
     for idx, frame in enumerate(video_frames_np):
       if idx in video_segments:
         pil_frame = Image.fromarray(frame)
+        original_filename = os.path.basename(video_img_paths[idx])
+        base_name, ext = os.path.splitext(original_filename) 
+
         for obj_id, mask in video_segments[idx].items():
             mask = mask.squeeze()  # remove extra dims
             # Ensure mask is 2D
             if mask.ndim != 2:
                 mask = mask.reshape(frame.shape[0], frame.shape[1])
             mask_img = Image.fromarray((mask*255).astype(np.uint8))
-            mask_img.save(f"masks/frame_{idx:03d}_obj{obj_id}.png")
+            mask_filename = os.path.join(masks_output_folder, f"{base_name}{ext}") 
+            mask_img.save(mask_filename)
             pil_frame = Image.blend(pil_frame, mask_img.convert("RGB").resize(pil_frame.size), alpha=0.5)
         gallery_imgs.append(pil_frame)
 
@@ -167,7 +172,7 @@ with gr.Blocks() as demo:
         folder_input = gr.Textbox(label="Folder with images")
         load_btn = gr.Button("Load Folder")
 
-    frame_display = gr.Image(interactive=False, label="Frame 0")  # display only
+    frame_display = gr.Image(interactive=True, label="Frame 0")  # display only
 
     mode_text = gr.Textbox(label="Click Mode", interactive=False, value="Positive Mode")
 
@@ -175,22 +180,18 @@ with gr.Blocks() as demo:
         pos_btn = gr.Button("Positive Mode")
         neg_btn = gr.Button("Negative Mode")
 
-    x_slider = gr.Slider(0, 2000, step=1, label="X coordinate")
-    y_slider = gr.Slider(0, 2000, step=1, label="Y coordinate")
-    add_point_btn = gr.Button("Add Point")
-
+    output_folder_input = gr.Textbox(label="Folder to store masks", value=".")
     run_btn = gr.Button("Run Model")
     gallery_out = gr.Gallery(label="Segmented Frames", show_label=True, scale=4)
 
     # ---------- Events ----------
-    load_btn.click(load_folder, inputs=folder_input, outputs=[frame_display, x_slider, y_slider])
+    load_btn.click(load_folder, inputs=folder_input, outputs=frame_display)
     pos_btn.click(set_positive_mode, inputs=None, outputs=mode_text)
     neg_btn.click(set_negative_mode, inputs=None, outputs=mode_text)
-    # Live preview as sliders move
-    x_slider.change(update_preview, inputs=[x_slider, y_slider], outputs=frame_display)
-    y_slider.change(update_preview, inputs=[x_slider, y_slider], outputs=frame_display)
-    # Add click when button pressed
-    add_point_btn.click(add_click_via_slider, inputs=[x_slider, y_slider], outputs=frame_display)
-    run_btn.click(run_model, outputs=[gr.Textbox(), gallery_out])
 
-demo.launch(show_error=True, share=True, server_name="0.0.0.0", server_port=7997)
+    # Add click directly by selecting on the image
+    frame_display.select(add_click_via_select, inputs=None, outputs=frame_display)
+    
+    run_btn.click(run_model, inputs=output_folder_input, outputs=[gr.Textbox(), gallery_out])
+
+demo.launch(show_error=True, share=False, server_name="0.0.0.0", server_port=7997, inbrowser=True) 
