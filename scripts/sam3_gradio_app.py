@@ -157,7 +157,7 @@ def run_model(masks_parent_path):
             if mask.ndim != 2:
                 mask = mask.reshape(frame.shape[0], frame.shape[1])
             mask_img = Image.fromarray((mask*255).astype(np.uint8))
-            mask_filename = os.path.join(masks_output_folder, f"{base_name}{ext}") 
+            mask_filename = os.path.join(masks_output_folder, f"{base_name}.png") 
             mask_img.save(mask_filename)
             pil_frame = Image.blend(pil_frame, mask_img.convert("RGB").resize(pil_frame.size), alpha=0.5)
         gallery_imgs.append(pil_frame)
