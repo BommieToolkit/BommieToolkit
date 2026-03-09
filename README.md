@@ -96,6 +96,16 @@ pixi run match_images_by_ns \
   --colmap_folder_right monkey_output/colmap_images/rig1/camera2 \
   --threshold-ns 5000000
 ```
+(OPTIONAL) Get masks for the images using sam3, you have to have a hugging face account and login to download the weights
+```bash
+pixi run -e sam git-clone # Install sam3
+pixi run -e create_masks
+```
+To access the app click navigate on the following link:
+```bash
+http://0.0.0.0:7997
+```
+
 
 Execute COLMAP
 ```bash

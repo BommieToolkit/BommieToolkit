@@ -20,6 +20,7 @@ pyyaml = "*"
 [environments]
 kalibr = {features = ["kalibr"], no-default-feature = true}
 colmap = {features = ["colmap"], no-default-feature = true}
+sam = {features = ["sam"], no-default-feature = true}
 
 ########################################################################################################################
 ########################################################################################################################
@@ -67,6 +68,80 @@ exiftool = "*"
 
 [feature.kalibr.pypi-dependencies]
 igraph="*"
+
+########################################################################################################################
+########################################################################################################################
+# sam feature
+[feature.sam]
+channels = ["https://prefix.dev/conda-forge"]
+platforms = ["linux-64"]
+
+[feature.sam.system-requirements]
+cuda = "12.6"
+
+[feature.sam.tasks]
+git-clone = {cmd = "git clone https://github.com/facebookresearch/sam3.git && cp ./scripts/sam3_gradio_app.py ./sam3/"}
+create_masks = {cmd = "python sam3_gradio_app.py", cwd="sam3"}
+
+[feature.sam.pypi-options]
+no-build-isolation = true
+
+[feature.sam.pypi-dependencies]
+sam3 = {path = "./sam3/"}
+decord = ">=0.6.0, <0.7"
+
+[feature.sam.dependencies]
+# Core Python + GPU
+python = "3.12.*"
+pip = "*"
+setuptools="80.*"
+pkg-config="*"
+pytorch-gpu = "*"
+torchvision = "*"
+numpy = "1.26.*"
+scipy = "1.16.*"
+pandas = "2.3.*"
+opencv = "*"              # image processing
+typing_extensions = "*"
+
+# CUDA
+# CUDA Build Tools
+cuda-compiler = "*"
+cuda-version = "12.6.*"
+cuda-cudart-dev = "*"
+cuda-crt = "*"
+libcusparse-dev = "*"
+cuda-driver-dev = "*"
+cuda-nvcc = "*"
+cuda-nvrtc-dev = "*"
+cuda-nvtx = "*"
+cuda-nvtx-dev = "*"
+cuda-nvml-dev = "*"
+cuda-profiler-api = "*"
+
+# CUDA Libraries
+cudnn = "*"
+libcublas-dev = "*"
+libcudss-dev = "*"
+libcufile-dev = "*"
+libcufft-dev = "*"
+libcurand-dev = "*"
+libcusolver-dev = "*"
+cusparselt = "*"
+libnvjitlink = "*"
+
+# Utilities
+ffmpeg = "*"              # video handling
+tqdm = "*"
+timm = "*"
+ftfy = "==6.1.1"
+regex = "*"
+iopath = "*"
+huggingface_hub = "*"
+gradio = "*"
+einops = ">=0.8.2,<0.9"
+pycocotools = ">=2.0.11,<3"
+psutil = ">=7.2.2,<8"
 
 ########################################################################################################################
 ########################################################################################################################
