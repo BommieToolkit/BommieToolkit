@@ -42,11 +42,33 @@ pixi run match_images_by_ns \
 ```
 
 Run calibration
+
 ```bash
 pixi run -e kalibr kalibr-calibrate-stereo-rig \
   images_folder_left=calibration_output/cam0 \
   images_folder_right=calibration_output/cam1 \
   output_folder=calibration_output \
+  target=files/april_10x6.yaml \
+  freq=30
+```
+Added optional flags: verbose, and create_bag.
+- verbose: The default value is 0, deactivating the visualization which makes the calibration fail when there is no screen avaialable.
+- create_bag: The default value is 1, which makes you create the rosbag every time you run the calibration script. If happy with the first bag, just setting create_bag=0, will avoid this extra step.
+
+Added the following flag to handle cases in which the calibration fails due to bad initialization. The scritp is going to wait for an input by the user to initialize the focal length. Typical good value is the half of the height of the image.
+
+```bash
+export KALIBR_MANUAL_FOCAL_LENGTH_INIT=1
+```
+
+Calibration with extra flags
+
+```bash
+pixi run -e kalibr kalibr-calibrate-stereo-rig \
+  images_folder_left=calibration_output/cam0 \
+  images_folder_right=calibration_output/cam1 \
+  output_folder=calibration_output \
+  verbose=1 create_bag=0 \ 
   target=files/april_10x6.yaml \
   freq=30
 ```

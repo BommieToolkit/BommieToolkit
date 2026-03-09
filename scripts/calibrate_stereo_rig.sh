@@ -6,6 +6,8 @@ target="files/april_10x6.yaml"
 output_folder="calibration_output"
 images_folder_left="${output_folder}/cam0"
 images_folder_right="${output_folder}/cam1"
+verbose=0
+create_bag=1
 
 # Check inputs
 split_and_assign() {
@@ -26,12 +28,21 @@ images_folder_right="${output_folder}/cam1"
 output_bag="${output_folder}/calibration.bag"
 
 
-if [ -f "$output_bag" ]; then
+if [ "$create_bag" -eq 1 ] && [ -f "$output_bag" ]; then
   rm "$output_bag"
+fi
+
+verbose_cmd=""
+if [ "$verbose" -eq 1 ]; then
+  verbose_cmd="--verbose"
 fi
 
 # Run calibration steps
 source catkin_ws/devel/setup.bash
 
-rosrun kalibr kalibr_bagcreater --folder ${output_folder} --output-bag ${output_bag}
-rosrun kalibr kalibr_calibrate_cameras --target ${target} --models pinhole-radtan pinhole-radtan --topics /cam0/image_raw /cam1/image_raw --bag ${output_bag} --bag-freq ${freq} --verbose
+if [ "$create_bag" -eq 1 ]; then
+  rosrun kalibr kalibr_bagcreater --folder ${output_folder} --output-bag ${output_bag}
+fi
+
+export KALIBR_MANUAL_FOCAL_LENGTH_INIT=1
+rosrun kalibr kalibr_calibrate_cameras --target ${target} --models pinhole-radtan pinhole-radtan --topics /cam0/image_raw /cam1/image_raw --bag ${output_bag} --bag-freq ${freq} ${verbose_cmd}

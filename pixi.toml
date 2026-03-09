@@ -1,5 +1,5 @@
 [workspace]
-authors = ["alejandrofontan <fontanvillacampa@gmail.com>"]
+authors = ["alejandrofontan <fontanvillacampa@gmail.com>", "EmilioOlivastri <emilito.olivastri@gmail.com>"]
 channels = ["conda-forge"]
 name = "BommieToolkit"
 platforms = ["linux-64"]
