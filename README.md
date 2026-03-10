@@ -24,7 +24,7 @@ pixi run extract_images --video videos/cal_left.MP4 --output calibration_output/
 pixi run extract_images --video videos/cal_right.MP4 --output calibration_output/cam1 --gray --scale
 or
 # Skip is now how many seconds to skip from the start of the video
-# You can let the factor be estimated automatically or explicit it 
+# You can let the factor be estimated automatically or explicit it
 pixi run extract_images --video videos/cal_left.MP4 --output calibration_output/cam0 --gray --factor 0.5 --skip 2.0
 pixi run extract_images --video videos/cal_right.MP4 --output calibration_output/cam1 --gray --factor 0.5 --skip 2.0
 
@@ -38,7 +38,7 @@ pixi run match_images_by_ns \
   --colmap_folder_left calibration_output/syncd/cam0 \
   --colmap_folder_right calibration_output/syncd/cam1 \
   --threshold-ns 5000000 \
-  --sample_step 5 
+  --sample_step 5
 ```
 
 Run calibration
@@ -68,7 +68,7 @@ pixi run -e kalibr kalibr-calibrate-stereo-rig \
   images_folder_left=calibration_output/cam0 \
   images_folder_right=calibration_output/cam1 \
   output_folder=calibration_output \
-  verbose=1 create_bag=0 \ 
+  verbose=1 create_bag=0 \
   target=files/april_10x6.yaml \
   freq=30
 ```
@@ -98,8 +98,8 @@ pixi run match_images_by_ns \
 ```
 (OPTIONAL) Get masks for the images using sam3, you have to have a hugging face account and login to download the weights
 ```bash
-pixi run -e sam git-clone # Install sam3
-pixi run -e create_masks
+pixi run -e sam hf auth login
+pixi run -e sam create_masks
 ```
 To access the app click navigate on the following link:
 ```bash
@@ -124,8 +124,8 @@ pixi run -e colmap colmap rig_configurator \
 ```
 
 ```bash
-pixi run -e colmap colmap sequential_matcher --database_path monkey_output/database.db 
-``` 
+pixi run -e colmap colmap sequential_matcher --database_path monkey_output/database.db
+```
 
 ```bash
 mkdir -p monkey_output/sparse
@@ -145,7 +145,7 @@ pixi run -e colmap colmap mapper \
   --image_path monkey_output/colmap_images \
   --output_path monkey_output/sparse \
   --Mapper.ba_use_gpu 1
-``` 
+```
 
 Visualize reconstruction
 ```bash
@@ -153,7 +153,7 @@ pixi run -e colmap colmap gui \
   --database_path monkey_output/database.db  \
   --image_path monkey_output/colmap_images \
   --import_path monkey_output/sparse/0
-``` 
+```
 
 Get COLMAP output
 ```bash
@@ -161,14 +161,14 @@ pixi run -e colmap colmap model_converter \
 	--input_path monkey_output/sparse/0 \
     --output_path monkey_output/sparse/0 \
     --output_type TXT
-``` 
+```
 
 ```bash
 pixi run -e colmap colmap model_converter \
 	--input_path monkey_output/sparse/0 \
     --output_path monkey_output/sparse/0/mesh.ply \
     --output_type PLY
-```  
+```
 
 ```bash
 pixi run colmap2nerf --text sparse/0 --images colmap_images --out transforms.json --keep_colmap_coords

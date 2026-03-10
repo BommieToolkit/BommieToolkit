@@ -80,14 +80,13 @@ platforms = ["linux-64"]
 cuda = "12.6"
 
 [feature.sam.tasks]
-git-clone = {cmd = "git clone https://github.com/facebookresearch/sam3.git && cp ./scripts/sam3_gradio_app.py ./sam3/"}
-create_masks = {cmd = "python sam3_gradio_app.py", cwd="sam3"}
+create_masks = {cmd = "python sam3_gradio_app.py", cwd="scripts"}
 
 [feature.sam.pypi-options]
 no-build-isolation = true
 
 [feature.sam.pypi-dependencies]
-sam3 = {path = "./sam3/"}
+sam3 = { git = "https://github.com/BommieToolkit/sam3_bommie" }
 decord = ">=0.6.0, <0.7"
 
 [feature.sam.dependencies]
@@ -137,7 +136,7 @@ timm = "*"
 ftfy = "==6.1.1"
 regex = "*"
 iopath = "*"
-huggingface_hub = "*"
+huggingface_hub = ">=0.23"
 gradio = "*"
 einops = ">=0.8.2,<0.9"
 pycocotools = ">=2.0.11,<3"
