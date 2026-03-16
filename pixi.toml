@@ -10,6 +10,7 @@ extract_images = "python scripts/vid2imgs.py"
 match_images_by_ns = "python scripts/match_images_by_ns.py"
 get_rig_config_json= "python scripts/convert_camchain_to_rig_config.py"
 colmap2nerf = { cmd = "python ../scripts/colmap2nerf.py", cwd = "monkey_output" }
+extract_images_dev = "python scripts/vid2imgs_dev.py"
 
 [dependencies]
 python = "*"
