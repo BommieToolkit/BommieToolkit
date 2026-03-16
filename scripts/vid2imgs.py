@@ -25,7 +25,31 @@ def probe_timecode(path: str) -> Optional[str]:
     except subprocess.CalledProcessError as e:
         print("ffprobe error:", e.stderr.strip())
         return None
-    
+
+def probe_fps(path: str) -> Optional[float]:
+    cmd = [
+        "ffprobe",
+        "-v", "error",
+        "-select_streams", "v:0",
+        "-show_entries", "stream=r_frame_rate",
+        "-of", "default=nokey=1:noprint_wrappers=1",
+        path,
+    ]
+    try:
+        out = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        fps_str = out.stdout.strip()
+        if fps_str:
+            # fps_str is often a fraction like "30000/1001"
+            if "/" in fps_str:
+                num, denom = map(int, fps_str.split("/"))
+                return num / denom
+            else:
+                return float(fps_str)
+        return None
+    except subprocess.CalledProcessError as e:
+        print("ffprobe error:", e.stderr.strip())
+        return None
+
 def timecode_to_ns(tc: str, fps) -> int:
     """
     Convert 'HH:MM:SS:FF' to nanoseconds.
@@ -53,30 +77,28 @@ def main():
     parser = argparse.ArgumentParser(description='Convert video to images at desired frame rate')
     parser.add_argument('--video', type=str, help='Path to video file')
     parser.add_argument('--output', type=str, help='Path to output directory')
-    parser.add_argument('--fps', type=int, default=30, help='Frame rate of the video')
-    parser.add_argument('--sample_step', type=int, default=0, help='Number of frames to skip')
-    parser.add_argument('--max_frames', type=int, default=None, help='Maximum number of frames to extract')
-    parser.add_argument('--vis', type=bool, default=False, help='Visualize the video')
-    parser.add_argument('--factor', type=float, default=1.0, help='Rescaling factor for output images')
-    parser.add_argument('--scale', action=BooleanOptionalAction, default=False, help='Auto-scale frames to ~640x480 total pixels while preserving aspect ratio')
-    parser.add_argument('--skip', type=float, default=0.0, help='Seconds to skip at start of video')
+
+    parser.add_argument('--resolution', type=str, choices=['lowest', 'low', 'medium', 'high'], default=None,
+                        help='Preset resolution scale: lowest (~320x240), low (~640x480), medium (~1920x1080), high (~3840x2160)')
     parser.add_argument('--gray', action='store_true', help='Process frames in grayscale')
     parser.add_argument('--format', type=str, default='png', help='Image format')
+
+    parser.add_argument('--max_frames', type=int, default=None, help='Maximum number of frames to extract')
+    parser.add_argument('--skip', type=float, default=0.0, help='Seconds to skip at start of video')
+    parser.add_argument('--vis', type=bool, default=False, help='Visualize the video')
 
     args = parser.parse_args()
     path_video = args.video
     path_output = args.output
-    sample_step = args.sample_step
+
+    resolution = args.resolution
     format = args.format
-    fps = args.fps
+
     max_frames = args.max_frames
-    vis = args.vis
-    factor = args.factor if args.factor > 0.0 else None
     skip = args.skip
-    
-    # If the scale option is set, it overrides the factor option
-    scale = args.scale
-    define_factor = True if scale else False
+    vis = args.vis
+
+    fps = probe_fps(path_video)
 
     # If output folder exists, remove it and everything inside
     folder_output = Path(path_output)
@@ -85,7 +107,30 @@ def main():
     folder_output.mkdir(parents=True, exist_ok=True)
 
     # Resolution scaling
-    TARGET_PIXELS = 640 * 480  # 307,200
+    TARGET_PIXELS_EXTRA_LOW = 320 * 240  # 76,800
+    TARGET_PIXELS_LOW = 640 * 480  # 307,200
+    TARGET_PIXELS_MEDIUM = 1920 * 1080  # 2,073,600
+    TARGET_PIXELS_HIGH = 3840 * 2160  # 8,294,400
+
+    scale = False
+    scale_factor = 1.0
+    define_factor = False
+    if resolution == 'lowest':
+        TARGET_PIXELS = TARGET_PIXELS_EXTRA_LOW
+        scale = True
+        define_factor = True
+    elif resolution == 'low':
+        TARGET_PIXELS = TARGET_PIXELS_LOW
+        scale = True
+        define_factor = True
+    elif resolution == 'medium':
+        TARGET_PIXELS = TARGET_PIXELS_MEDIUM
+        scale = True
+        define_factor = True
+    elif resolution == 'high':
+        TARGET_PIXELS = TARGET_PIXELS_HIGH
+        scale = True
+        define_factor = True
 
     # Time synchronization via timecode
     tc = probe_timecode(path_video)
@@ -108,31 +153,27 @@ def main():
         cap.set(cv2.CAP_PROP_POS_FRAMES, frames_to_skip)
         time_ns += frames_to_skip * delta
 
+
     for i in tqdm(range(frame_count - frames_to_skip), desc ="Extracting"):
         ret, img = cap.read()
         time_ns += delta
 
         if define_factor and scale:
             h0, w0 = img.shape[:2]
-            factor = (TARGET_PIXELS / float(w0 * h0)) ** 0.5
-            factor = min(1.0, factor)
+            scale_factor = (TARGET_PIXELS / float(w0 * h0)) ** 0.5
+            scale_factor = min(1.0, scale_factor)
             define_factor = False
 
-        if ret and (sample_step == 0 or i % sample_step == 0):
+        if ret :
             image_timestamp = time_ns
-            width = int(img.shape[1] *  factor)
-            height = int(img.shape[0] * factor)
+            width = int(img.shape[1] *  scale_factor)
+            height = int(img.shape[0] * scale_factor)
             res_img = cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
 
-            # Check sharpness
-            # fm = sharpness(res_img)
-            # if fm < 30:
-            #     continue
-            
             if vis:
                 cv2.imshow('Frame', res_img)
                 cv2.waitKey(30)
-            
+
             # Change the image to grayscale
             image_timestamp_str = f"{image_timestamp:019d}"
 
@@ -146,7 +187,7 @@ def main():
 
         if max_frames is not None and counter >= max_frames:
             break
-    
+
     cap.release()
     if vis: cv2.destroyAllWindows()
 

@@ -20,13 +20,13 @@ pixi run -e kalibr build
 
 Extract images from calibration videos
 ```bash
-pixi run extract_images --video videos/cal_left.MP4 --output calibration_output/cam0 --gray --scale
-pixi run extract_images --video videos/cal_right.MP4 --output calibration_output/cam1 --gray --scale
+pixi run extract_images --video videos/cal_left.MP4 --output calibration_output/cam0 --gray --resolution medium
+pixi run extract_images --video videos/cal_right.MP4 --output calibration_output/cam1 --gray --resolution medium
 or
 # Skip is now how many seconds to skip from the start of the video
 # You can let the factor be estimated automatically or explicit it
-pixi run extract_images --video videos/cal_left.MP4 --output calibration_output/cam0 --gray --factor 0.5 --skip 2.0
-pixi run extract_images --video videos/cal_right.MP4 --output calibration_output/cam1 --gray --factor 0.5 --skip 2.0
+pixi run extract_images --video videos/cal_left.MP4 --output calibration_output/cam0 --gray --skip 2.0
+pixi run extract_images --video videos/cal_right.MP4 --output calibration_output/cam1 --gray --skip 2.0
 
 ```
 (OPTIONAL!! But makes life easier)
@@ -82,8 +82,8 @@ pixi run get_rig_config_json calibration_output/calibration-camchain.yaml calibr
 Extract images from videos
 
 ```bash
-pixi run extract_images --video videos/monkey_left.MP4 --output monkey_output/monkey_images_left --scale
-pixi run extract_images --video videos/monkey_right.MP4 --output monkey_output/monkey_images_right --scale
+pixi run extract_images --video videos/monkey_left.MP4 --output monkey_output/monkey_images_left --resolution medium
+pixi run extract_images --video videos/monkey_right.MP4 --output monkey_output/monkey_images_right --resolution medium
 ```
 
 Synch image pairs using timestamps
