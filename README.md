@@ -20,14 +20,11 @@ pixi run -e kalibr build
 
 Extract images from calibration videos
 ```bash
-pixi run extract_images --video videos/cal_left.MP4 --output calibration_output/cam0 --gray --resolution medium
-pixi run extract_images --video videos/cal_right.MP4 --output calibration_output/cam1 --gray --resolution medium
-or
-# Skip is now how many seconds to skip from the start of the video
-# You can let the factor be estimated automatically or explicit it
-pixi run extract_images --video videos/cal_left.MP4 --output calibration_output/cam0 --gray --skip 2.0
-pixi run extract_images --video videos/cal_right.MP4 --output calibration_output/cam1 --gray --skip 2.0
-
+# Target pixel counts used for scaling based on the '--resolution' preset
+#     Presets: extra-low (~320x240), low (~640x480), medium (~1920x1080), high (~3840x2160)
+# 'skip' specifies how many seconds to skip from the beginning of the video
+pixi run extract_images --video videos/cal_left.MP4 --output calibration_output/cam0 --gray --resolution medium (--skip 2.0)
+pixi run extract_images --video videos/cal_right.MP4 --output calibration_output/cam1 --gray --resolution medium (--skip 2.0)
 ```
 (OPTIONAL!! But makes life easier)
 Synch image pairs using timestamps
