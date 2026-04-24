@@ -21,6 +21,7 @@ pyyaml = "*"
 [environments]
 kalibr = {features = ["kalibr"], no-default-feature = true}
 colmap = {features = ["colmap"], no-default-feature = true}
+uwsfm = {features = ["uwsfm"], no-default-feature = true}
 sam = {features = ["sam"], no-default-feature = true}
 
 ########################################################################################################################
@@ -157,3 +158,13 @@ cuda = "12.6"
 
 [feature.colmap.dependencies]
 colmap = { build="*cuda*", version = "==3.11.1" }
+
+########################################################################################################################
+########################################################################################################################
+# uwsfm feature
+[feature.uwsfm]
+channels = ["https://prefix.dev/conda-forge", "nmarticorena"]
+platforms = ["linux-64"]
+
+[feature.uwsfm.dependencies]
+colmap-underwater = "==3.10"
