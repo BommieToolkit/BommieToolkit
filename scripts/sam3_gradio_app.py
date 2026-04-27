@@ -141,7 +141,7 @@ def run_model(masks_parent_path):
             for i, out_obj_id in enumerate(out_obj_ids)
         }
 
-    masks_output_folder = os.path.join(masks_parent_path, "masks")
+    masks_output_folder = masks_parent_path
     os.makedirs(masks_output_folder, exist_ok=True)
     gallery_imgs = []
 
