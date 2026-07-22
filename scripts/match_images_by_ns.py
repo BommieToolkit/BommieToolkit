@@ -4,6 +4,7 @@ import re
 import shutil
 from pathlib import Path
 from bisect import bisect_left
+import sys
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp", ".gif", ".webp"}
 
@@ -28,12 +29,12 @@ def list_images_with_ts(folder: Path):
             items.append((ts, p))
     return items
 
-def build_sorted_b(b_items):
-    """Return sorted list of timestamps and parallel list of Paths for B."""
-    b_items_sorted = sorted(b_items, key=lambda x: x[0])
-    b_ts = [t for t, _ in b_items_sorted]
-    b_paths = [p for _, p in b_items_sorted]
-    return b_ts, b_paths
+def build_sorted(items):
+    """Return sorted list of timestamps and parallel list of Paths."""
+    items_sorted = sorted(items, key=lambda x: x[0])
+    ts = [t for t, _ in items_sorted]
+    paths = [p for _, p in items_sorted]
+    return ts, paths
 
 def closest_index(sorted_list, x):
     """Index of closest value to x in sorted_list (ties resolve to the left)."""
@@ -48,69 +49,99 @@ def closest_index(sorted_list, x):
         return after
     else:
         return before
+    
+def parse_numbered_flag(argv: list[str], prefix: str) -> dict[int, str]:
+    """Pull out --{prefix}_N value pairs from argv."""
+    result = {}
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        if arg.startswith(f"--{prefix}_"):
+            idx_str = arg[len(f"--{prefix}_"):]
+            if idx_str.isdigit() and i + 1 < len(argv):
+                result[int(idx_str)] = argv[i + 1]
+        i += 1
+    return result
+
 
 def main():
-    ap = argparse.ArgumentParser(description="Match images across two folders by nanosecond timestamps.")
+    ap = argparse.ArgumentParser(description="Match images across N folders by nanosecond timestamps.")
 
-    ap.add_argument("--images_folder_left", type=Path, required=True, help="Path to images folder left")
-    ap.add_argument("--images_folder_right", type=Path, required=True, help="Path to images folder right")
-    ap.add_argument("--colmap_folder_left", type=Path, help="Output folder for copies from left")
-    ap.add_argument("--colmap_folder_right", type=Path, help="Output folder for copies from right")
     ap.add_argument("--sample_step", type=int, default=10, help="")
     ap.add_argument("--threshold-ns", type=int, required=True,
                     help="Max allowed absolute timestamp difference (in nanoseconds)")
-    args = ap.parse_args()
+    
+    args, _unknown = ap.parse_known_args()
+ 
+    images_folder = parse_numbered_flag(sys.argv[1:], "images_folder")
+    colmap_folder = parse_numbered_flag(sys.argv[1:], "colmap_folder")
 
-    a_items = list_images_with_ts(args.images_folder_left)
-    b_items = list_images_with_ts(args.images_folder_right)
-
-    if not a_items:
-        print("No timestamped images found in folder A.")
+    if not images_folder:
+        print("No --images_folder_N arguments given.")
         return
-    if not b_items:
-        print("No timestamped images found in folder B.")
-        return
+ 
+    num_cameras = max(images_folder) + 1
+    for i in range(num_cameras):
+        if i not in images_folder:
+            print(f"Missing --images_folder_{i} - camera indices must be contiguous starting at 0.")
+            return
+        if i not in colmap_folder:
+            print(f"Missing --colmap_folder_{i} - every images_folder_N needs a matching colmap_folder_N.")
+            return
 
-    if args.colmap_folder_left.exists() and args.colmap_folder_left.is_dir():
-        shutil.rmtree(args.colmap_folder_left)
-    args.colmap_folder_left.mkdir(parents=True, exist_ok=True)
-
-    if args.colmap_folder_right.exists() and args.colmap_folder_right.is_dir():
-        shutil.rmtree(args.colmap_folder_right)
-    args.colmap_folder_right.mkdir(parents=True, exist_ok=True)
-
-    # Sort both lists by timestamp
-    b_ts, b_paths = build_sorted_b(b_items)
-    a_ts, a_paths = build_sorted_b(a_items)
-
+    in_paths = {i: Path(images_folder[i]) for i in range(num_cameras)}
+    out_paths = {i: Path(colmap_folder[i]) for i in range(num_cameras)}
+ 
+    items = {i: list_images_with_ts(in_paths[i]) for i in range(num_cameras)}
+    for i, its in items.items():
+        if not its:
+            print(f"No timestamped images found in folder cam{i}.")
+            return
+ 
+    for folder in out_paths.values():
+        if folder.exists() and folder.is_dir():
+            shutil.rmtree(folder)
+        folder.mkdir(parents=True, exist_ok=True)
+ 
+    sorted_ts, sorted_paths = {}, {}
+    for i, its in items.items():
+        ts, paths = build_sorted(its)
+        sorted_ts[i] = ts
+        sorted_paths[i] = paths
+ 
+    # cam0 is always the reference/anchor
+    ref_ts, ref_paths = sorted_ts[0], sorted_paths[0]
+ 
     matches = 0
     skipped = 0
     counter = 0
     subsample = args.sample_step
-    for ts_a, path_a in zip(a_ts, a_paths):
-        idx = closest_index(b_ts, ts_a)
-        ts_b = b_ts[idx]
-        path_b = b_paths[idx]
-        diff = abs(ts_a - ts_b)
-
-        if diff <= args.threshold_ns and counter % subsample == 0:
-            # Copy A -> colmap_folder_left with original filename
-            dest_a = args.colmap_folder_left / path_a.name
-            shutil.copy2(path_a, dest_a)
-            #dest_a.symlink_to(path_a.resolve())
-
-            # Copy B -> colmap_folder_right but use A's filename
-            dest_b = args.colmap_folder_right / path_a.name
-            shutil.copy2(path_b, dest_b)
-            #dest_b.symlink_to(path_b.resolve())
-            
+ 
+    for ts_a, path_a in zip(ref_ts, ref_paths):
+        best = {0: path_a}
+        ok = True
+        for i in range(1, num_cameras):
+            idx = closest_index(sorted_ts[i], ts_a)
+            ts_b = sorted_ts[i][idx]
+            if abs(ts_a - ts_b) > args.threshold_ns:
+                ok = False
+                break
+            best[i] = sorted_paths[i][idx]
+ 
+        if ok and counter % subsample == 0:
+            for i, src_path in best.items():
+                # all cameras' output files share cam0's filename
+                dest = out_paths[i] / path_a.name
+                shutil.copy2(src_path, dest)
+                # dest.symlink_to(src_path.resolve())
             matches += 1
         else:
             skipped += 1
-
+ 
         counter += 1
-
-    print(f"Done. Matches copied: {matches}. A images skipped (no close match): {skipped}.")
-
+ 
+    print(f"Done. Matches copied: {matches}. cam0 images skipped (no close match / subsampled): {skipped}.")
+ 
+ 
 if __name__ == "__main__":
     main()

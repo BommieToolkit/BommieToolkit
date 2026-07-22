@@ -62,6 +62,7 @@ def timecode_to_ns(tc: str, fps) -> int:
         elif abs(fps - 59.94) < 1e-6: fps = Fraction(60000, 1001)
         else: fps = Fraction(str(fps))  # exact rational from decimal string
 
+    tc = tc.replace(";", ":")
     hh, mm, ss, ff = map(int, tc.split(":"))
     total_seconds = Fraction(hh*3600 + mm*60 + ss, 1) + Fraction(ff, 1) / fps
     return int(round(total_seconds * 1_000_000_000))

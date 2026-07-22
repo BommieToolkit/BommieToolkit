@@ -5,11 +5,11 @@ set -euo pipefail
 freq=""
 target=""
 output_folder=""
-images_folder_left=""
-images_folder_right=""
 verbose=""
 create_bag=""
 manual_focal_length_init=""
+camera_model=""
+declare -A images_folder
 
 # Check inputs
 split_and_assign() {
@@ -17,8 +17,16 @@ split_and_assign() {
   local key=$(echo $input | cut -d'=' -f1)
   local value=$(echo $input | cut -d'=' -f2-)
   case "$key" in
-    output_folder|freq|target|images_folder_left|images_folder_right|verbose|create_bag|manual_focal_length_init)
+     output_folder|freq|target|verbose|create_bag|manual_focal_length_init|camera_model)
       printf -v "$key" '%s' "$value"
+      ;;
+    images_folder_*)
+      local idx="${key#images_folder_}"
+      if ! [[ "$idx" =~ ^[0-9]+$ ]]; then
+        echo "Invalid camera index in '$key' - expected images_folder_N" >&2
+        exit 2
+      fi
+      images_folder[$idx]="$value"
       ;;
     *)
       echo "Unknown argument: $key" >&2
@@ -35,28 +43,34 @@ done
 freq="${freq:-30.0}"
 target="${target:-files/april_10x6.yaml}"
 output_folder="${output_folder:-calibration_ws}"
-images_folder_left="${images_folder_left:-${output_folder}/images/synced/cam0}"
-images_folder_right="${images_folder_right:-${output_folder}/images/synced/cam1}"
 verbose="${verbose:-0}"
 create_bag="${create_bag:-1}"
+camera_model="${camera_model:-pinhole-radtan}"
 manual_focal_length_init="${KALIBR_MANUAL_FOCAL_LENGTH_INIT:-0}"
 
+num_cameras=${#images_folder[@]}
+if [ "$num_cameras" -lt 1 ]; then
+  echo "Need at least one image_folder_N=path argument." >&2
+  exit 2
+fi
+
+echo "Configuring $num_cameras camera(s)..."
 
 # Create folder structure
-output_bag="${output_folder}/calibration.bag"
-expected_camchain="${output_folder}/calibration-camchain.yaml"
-bag_input_folder="$(dirname "$images_folder_left")"
 mkdir -p "$output_folder"
 
-if [ "$(dirname "$images_folder_right")" != "$bag_input_folder" ]; then
-  echo "images_folder_left and images_folder_right must share one parent folder for kalibr_bagcreater." >&2
-  exit 2
-fi
-
-if [ "$(basename "$images_folder_left")" != "cam0" ] || [ "$(basename "$images_folder_right")" != "cam1" ]; then
-  echo "Kalibr expects camera folders named cam0 and cam1; got '$images_folder_left' and '$images_folder_right'." >&2
-  exit 2
-fi
+bag_input_folder="$(dirname "${images_folder[0]}")"
+for ((i=0; i<num_cameras; i++)); do
+  folder="${images_folder[$i]}"
+  if [ "$(dirname "$folder")" != "$bag_input_folder" ]; then
+    echo "All images_folder_N must share one parent folder for kalibr_bagcreater. '$folder' does not match '$bag_input_folder'." >&2
+    exit 2
+  fi
+  if [ "$(basename "$folder")" != "cam${i}" ]; then
+    echo "Kalibr expects camera folders named cam0, cam1, ...; got '$folder' for camera index $i." >&2
+    exit 2
+  fi
+done
 
 has_calibration_images() {
   local image_folder=$1
@@ -65,17 +79,16 @@ has_calibration_images() {
 }
 
 if [ "$create_bag" -eq 1 ]; then
-  if ! has_calibration_images "$images_folder_left"; then
-    echo "No calibration images found in '$images_folder_left'." >&2
-    exit 1
-  fi
-
-  if ! has_calibration_images "$images_folder_right"; then
-    echo "No calibration images found in '$images_folder_right'." >&2
-    exit 1
-  fi
+  for ((i=0; i<num_cameras; i++)); do
+    if ! has_calibration_images "${images_folder[$i]}"; then
+      echo "No calibration images found in '${images_folder[$i]}'." >&2
+      exit 1
+    fi
+  done
 fi
 
+output_bag="${output_folder}/calibration.bag"
+expected_camchain="${output_folder}/calibration-camchain.yaml"
 
 if [ "$create_bag" -eq 1 ] && [ -f "$output_bag" ]; then
   rm "$output_bag"
@@ -108,9 +121,28 @@ else
   unset KALIBR_MANUAL_FOCAL_LENGTH_INIT
 fi
 
-"${kalibr_bin}/kalibr_calibrate_cameras" --target "$target" --models pinhole-radtan pinhole-radtan --topics /cam0/image_raw /cam1/image_raw --bag "$output_bag" --bag-freq "$freq" --dont-show-report ${verbose_cmd}
-
+# Build --topics and --models lists with num_cameras entries
+topics=()
+models=()
+for ((i=0; i<num_cameras; i++)); do
+  topics+=("/cam${i}/image_raw")
+  models+=("$camera_model")
+done
+ 
+echo "Topics: ${topics[*]}"
+echo "Models: ${models[*]}"
+ 
+"${kalibr_bin}/kalibr_calibrate_cameras" \
+  --target "$target" \
+  --models "${models[@]}" \
+  --topics "${topics[@]}" \
+  --bag "$output_bag" \
+  --bag-freq "$freq" \
+  --dont-show-report ${verbose_cmd}
+ 
 if [ ! -f "$expected_camchain" ]; then
   echo "Kalibr completed without producing expected camchain: $expected_camchain" >&2
   exit 1
 fi
+ 
+echo "Done. Result: $expected_camchain"

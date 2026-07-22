@@ -1,0 +1,50 @@
+# ================================
+# Kalibr stereo calibration config
+# ================================
+
+# pixi run -e kalibr calibrate configs/calibration.yaml
+
+steps:
+  extract: true
+  sync: true
+  calibrate: true
+  postprocess: true
+  rig_config: true
+
+# Calibration output directory
+calibration_dir: /calibration_output
+
+# Input videos
+cameras:
+  - video: videos/cal_left.MP4
+  - video: videos/cal_middle.MP4
+  - video: videos/cal_right.MP4
+
+# Image extraction settings
+extract:
+  resolution: medium   # extra-low(~320x240) | low(~640x480) | medium(~1920x1080) | high(~3840x2160)
+  gray: true
+  skip: 5.0
+  max_frames: 0     
+
+# Image sync
+sync:
+  threshold_ns: 5000000
+  sample_step: 3
+
+# Calibration settings
+calibrate:
+  target: files/april_10x6.yaml
+  freq: 30
+  verbose: 0
+  create_bag: 1 
+  manual_focal_length_init: 1
+
+postprocess:
+  april: files/april_10x6.yaml
+  housing: files/housing_params.yaml 
+  camera: cam0 
+
+# Generate rig_config.json
+rig_config:
+  enabled: true

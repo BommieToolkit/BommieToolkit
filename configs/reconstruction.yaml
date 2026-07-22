@@ -1,0 +1,69 @@
+# ================================
+# COLMAP reconstruction pipeline config
+# ================================
+
+output_dir: monkey_output
+
+videos:
+  left: videos/monkey_left.MP4
+  right: videos/monkey_right.MP4
+
+extract:
+  resolution: medium   # extra-low | low | medium | high
+  gray: false
+  skip: ""
+  max_frames: 0
+
+sync:
+  threshold_ns: 5000000
+  sample_step: ""
+
+# COLMAP-ready image layout: {output_dir}/colmap_images/{rig_name}/{camera_left_name,camera_right_name}
+colmap_images:
+  rig_name: rig1
+  camera_left_name: camera1
+  camera_right_name: camera2
+
+# (Optional) SAM3 mask generation. Requires `pixi run -e sam hf auth login` to
+masks:
+  enabled: false
+
+colmap:
+  database_path: ""
+  rig_config_path: calibration_output/rig_config.json
+  sparse_output: ""
+  use_masks: false
+  single_camera: 1
+  single_camera_per_folder: 1
+  single_camera_per_image: 0
+  ba_refine_sensor_from_rig: 0
+  ba_refine_focal_length: 0
+  ba_refine_extra_params: 0
+  ba_use_gpu: 1
+
+# colmap2nerf: sparse/0 + images -> transforms.json
+colmap2nerf:
+  enabled: true
+  sparse_input: ""
+  images_input: ""
+  output: ""
+  keep_colmap_coords: true
+
+# nerfstudio setup + splatfacto training
+nerfstudio:
+  enabled: true
+  setup_marker: nerfstudio/.post_install_done
+  vis: viewer
+  quit_on_train_completion: true
+  masked: false
+
+# Invert nerfstudio's coordinate normalization to recover metric scale.
+export_splat:
+  enabled: true
+  output_dir: ""
+
+transform_splats:
+  enabled: true
+  splat_path: ""
+  transform_path: ""
+  output_path: ""

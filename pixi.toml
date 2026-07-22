@@ -14,6 +14,10 @@ extract_images_dev = "python scripts/vid2imgs_dev.py"
 visualize_colmap = "python scripts/colmap_rerun.py"
 transform_splats = "python scripts/transform_splats.py"
 
+[tasks.run-full-reconstruction]
+cmd = "python scripts/run_full_reconstruction.py --config {{ config }}"
+args = [{ arg = "config", default = "configs/reconstruction.yaml" }]
+
 
 [dependencies]
 python = "*"
@@ -86,6 +90,10 @@ outputs = [
 ]
 cmd = "./scripts/calibrate_stereo_rig.sh images_folder_left={{ calibration_dir }}/cam0 images_folder_right={{ calibration_dir }}/cam1 output_folder={{ calibration_dir }} verbose=0 create_bag=1 target={{ calibration_target }} freq={{ calibration_freq }}"
 
+[feature.kalibr.tasks.calibrate]
+cmd = "python scripts/run_calibration.py --config {{ config }}"
+args = [{ arg = "config", default = "configs/calibration.yaml" }]
+
 [feature.kalibr.dependencies]
 python = "3.12.*"
 ros-noetic-desktop="*"
@@ -120,6 +128,7 @@ exiftool = "*"
 eigen = "*"
 eigen-abi-devel = "3.4.*"
 ros-dev-tools = "*"
+pyyaml = "*" 
 
 [feature.kalibr.pypi-dependencies]
 igraph="*"
